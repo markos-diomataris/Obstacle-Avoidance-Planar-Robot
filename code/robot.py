@@ -1,4 +1,3 @@
-#!/home/markos/anaconda3/bin/python
 """
 Implementation of Robot class
 """
@@ -6,12 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Robot():
-    def __init__(self,lengths):
+    def __init__(self,lengths, HOME):
         """
         l: list of connector lengths
         """
-
-        self.HOME = [np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, 0, 0 , -np.pi/2, np.pi/2]
+        
+        self.HOME = HOME
         self.lengths = lengths
         self.n = lengths.shape[0]
         self.state = np.array(self.HOME)

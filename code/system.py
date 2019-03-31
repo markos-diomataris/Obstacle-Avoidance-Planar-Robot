@@ -1,5 +1,3 @@
-#!/home/markos/anaconda3/bin/python
-
 from robot import Robot
 import numpy as np
 from pdb import set_trace
@@ -10,7 +8,7 @@ class PathPlanning():
         self.R = R
         self.integrator_ = self.R.state  # initial state of Robot
         self.differentiator_ = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
-        self.Logic_ = 'MinEnergy'
+        self.Logic_ = 'MinEnergy_Open'
         self.T = T
 
     def reset(self):
@@ -28,27 +26,30 @@ class PathPlanning():
         self.differentiator_ = input
         return ret
 
+    def integrator(self,input):
+        self.integrator_ = input*self.T + self.integrator_
+        return self.integrator_
+
+
     def logic(self,input):
         """
         Path planning Logic <3
         This is the heart of the robot
         here we decide depending on the spcecified task
         the desired joint velocities
+
+        MinEnergy_Open: Open loop minimum energy calculation no big deal
         """
 
-        if self.Logic_ == 'MinEnergy':  # one Task only (for testing)
+        if self.Logic_ == 'MinEnergy_Open':  # one Task only (for testing)
             Jplus = np.linalg.pinv(self.R.Jacobian()) 
             # caluclate q dots
             out = Jplus[:,:2] @ input  # FIX: zeropad input to 6 dimentions
         return out
     
-    def integrator(self,input):
-        self.integrator_ = input*self.T + self.integrator_
-        return self.integrator_
-
     def trajectoryPlan(self,Pa,Pb,tf):
         """
-        Calculate a streight line path from Pa to Pb
+        Calculate a straight line path from Pa to Pb
         according to a 2nd degree velocity profile
         v(t) = a*t^2 + b*t + c
         p(t) = integral_of v(t)
@@ -70,12 +71,17 @@ class PathPlanning():
 
     def move(self,Pb,tf):
         """
+        Considering as starting position the current position
+        first PathPlanning() is performed and then
+        the input(s) is fed through the system
+        the output is applied to the Robot
         """
-        Pa = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
+        
+        Pa = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool (current)
         move_states = []
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
-            q = self.integrator(self.logic(self.differentiator(p[:,i])))
+            q = self.integrator(self.logic(self.differentiator(p[:,i])))  # FIX: crate seperate loop function
             self.R.move(q)
             move_states.append(q) 
         return move_states
