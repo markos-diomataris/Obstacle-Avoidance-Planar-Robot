@@ -2,13 +2,13 @@ from robot import Robot
 import numpy as np
 from pdb import set_trace
 
-class PathPlanning():
+class PathPlanning:
 
     def __init__(self, R, T=0.01):
         self.R = R
         self.integrator_ = self.R.state  # initial state of Robot
         self.differentiator_ = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
-        self.Logic_ = 'MinEnergy_Closed'
+        self.Logic_ = 'Simple_Closed'
         self.T = T
 
     def reset(self):
@@ -37,13 +37,23 @@ class PathPlanning():
         This is the heart of the robot
         here we decide depending on the spcecified task
         the desired joint velocities
-        MinEnergy_Open: Open loop minimum energy calculation no big deal
+        Simple_Open: Open loop minimum energy calculation no big deal
         """
 
-        Jplus = np.linalg.pinv(self.R.Jacobian()) 
-        # caluclate q dots
-        out = Jplus[:,:2] @ input  # FIX: zeropad input to 6 dimentions
-        out = Jplus[:,:2] @ input  # FIX: zeropad input to 6 dimentions
+        # Task 1
+        J1plus = np.linalg.pinv(self.R.Jacobian()) 
+        T1 = J1plus[:,:2]@input
+        # Task 2
+        J1 = self.R.Jacobian()
+        qr = np.zeros(self.R.n)  # reference state
+        H2 = 0.5 * np.eye(self.R.n)
+        In = np.eye(self.R.n)
+        T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
+
+        # caluclate q dots 
+        #?FIX: zeropad input to 6 dimentions
+        out = T1 + T2 
+
         return out
     
     def trajectoryPlan(self,Pa,Pb,tf):
@@ -80,21 +90,24 @@ class PathPlanning():
         move_states = []
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
-            if self.Logic_ == 'MinEnergy_Open':
+
+            if self.Logic_ == 'Simple_Open':
                 out = self.differentiator(p[:,i])
                 out = self.logic(out)
                 q = self.integrator(out)
                 self.R.move(q)
                 move_states.append(q) 
-            elif self.Logic_ == 'MinEnergy_Closed':
+
+            elif self.Logic_ == 'Simple_Closed':
                 xd = p[:,i]
                 xe = self.R.fk()[:2,3]
                 e = xd - xe
-                K = 0.5 * np.eye(e.shape[0])
+                K = 0.5 * np.eye(e.shape[0])  # FIX: calibrate K
                 out = (K @ e) + v[:,i]
                 out = self.logic(out)
                 q = self.integrator(out)
                 self.R.move(q)
                 move_states.append(q) 
+
         return move_states
             

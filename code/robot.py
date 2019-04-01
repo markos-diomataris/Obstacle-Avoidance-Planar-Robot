@@ -4,7 +4,7 @@ Implementation of Robot class
 import numpy as np
 import matplotlib.pyplot as plt
 
-class Robot():
+class Robot:
     def __init__(self,lengths, HOME):
         """
         l: list of connector lengths

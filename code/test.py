@@ -9,15 +9,8 @@ plt.ion()
 HOME = [np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, 0, 0 , -np.pi/2, np.pi/2]
 R = Robot(np.ones(8),HOME)
 P = PathPlanning(R)
-P.Logic_ = 'MinEnergy_Open'
-print('Simulating with MinEnergy_Open')
-for i in range(3):
-    P.move(np.array([1,7]), 2)
-    P.move(np.array([7,1]), 2)
-    P.move(np.array([1,1]), 2)
-P.Logic_ = 'MinEnergy_Closed'
-print('Simulating with MinEnergy_Closed')
-time.sleep(2)
+P.Logic_ = 'Simple_Closed'
+
 for i in range(3):
     P.move(np.array([1,7]), 2)
     P.move(np.array([7,1]), 2)
