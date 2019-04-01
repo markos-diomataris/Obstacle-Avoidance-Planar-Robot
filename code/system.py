@@ -5,8 +5,9 @@ from pdb import set_trace
 
 class PathPlanning:
 
-    def __init__(self, R, T=0.01):
-        self.R = R
+    def __init__(self, R, O, T=0.01):
+        self.R = R  # Robot
+        self.O = O  # Obstacles
         self.integrator_ = self.R.state  # initial state of Robot
         self.differentiator_ = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
         self.Logic_ = 'Simple_Closed'
@@ -18,6 +19,7 @@ class PathPlanning:
         self.Y2= 7 
         self.ax.set_xlim((self.X1, self.X2))
         self.ax.set_ylim((self.Y1, self.Y2))
+        self.drawStep = 20
 
 
     def reset(self):
@@ -118,12 +120,16 @@ class PathPlanning:
                 self.R.move(q)
                 move_states.append(q) 
 
+            if i % self.drawStep == 0:
+                self.draw()
+
         return move_states
   
     def draw(self,state=None):
         """
-        Draw Robot in state 'state'
-        !! Does not change the state of the robot, just draws
+        Draw Robot  and obstacles in state 'state'
+        !! Does not change the state of the robot or position of obstacles,
+        just draws
         """
 
         if isinstance(state, np.ndarray):
@@ -137,10 +143,16 @@ class PathPlanning:
         self.ax.set_ylim((self.Y1, self.Y2))
         plt.grid()
         for i in range(self.R.n):
+            # draw Robot
             points.append((self.R.fk(i)[0,3], self.R.fk(i+1)[0,3]))
             points.append((self.R.fk(i)[1,3], self.R.fk(i+1)[1,3]))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
+        # draw obstacles
+        self.ax.add_patch(plt.Circle((self.O.bc1[0], self.O.bc1[1]), self.O.R, color='c', alpha=1, edgecolor='b'))
+        self.ax.add_patch(plt.Circle((self.O.bc2[0], self.O.bc2[1]), self.O.R, color='c', alpha=1, edgecolor='b'))
+            
+
         plt.plot(*points)
         plt.draw()
         plt.pause(0.1)
