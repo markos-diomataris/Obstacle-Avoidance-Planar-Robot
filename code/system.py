@@ -56,7 +56,7 @@ class PathPlanning:
         T1 = J1plus[:,:2]@input
         # Task 2
         J1 = self.R.Jacobian()
-        qr = np.zeros(self.R.n)  # reference state
+        qr = np.array([np.pi/2]+[0]*7)  # reference state
         H2 = 0.5 * np.eye(self.R.n)
         In = np.eye(self.R.n)
         T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
