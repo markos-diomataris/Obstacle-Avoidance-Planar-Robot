@@ -1,5 +1,6 @@
 from robot import Robot
 import numpy as np
+import matplotlib.pyplot as plt
 from pdb import set_trace
 
 class PathPlanning:
@@ -10,6 +11,14 @@ class PathPlanning:
         self.differentiator_ = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
         self.Logic_ = 'Simple_Closed'
         self.T = T
+        self.fig, self.ax = plt.subplots()
+        self.X1= -1
+        self.X2= 7
+        self.Y1= -1
+        self.Y2= 7 
+        self.ax.set_xlim((self.X1, self.X2))
+        self.ax.set_ylim((self.Y1, self.Y2))
+
 
     def reset(self):
         """
@@ -110,4 +119,31 @@ class PathPlanning:
                 move_states.append(q) 
 
         return move_states
-            
+  
+    def draw(self,state=None):
+        """
+        Draw Robot in state 'state'
+        !! Does not change the state of the robot, just draws
+        """
+
+        if isinstance(state, np.ndarray):
+            cache = self.R.state
+            self.R.state = state
+
+        points = [] 
+        # plt.figure(self.fig.number)
+        plt.cla()
+        self.ax.set_xlim((self.X1, self.X2))
+        self.ax.set_ylim((self.Y1, self.Y2))
+        plt.grid()
+        for i in range(self.R.n):
+            points.append((self.R.fk(i)[0,3], self.R.fk(i+1)[0,3]))
+            points.append((self.R.fk(i)[1,3], self.R.fk(i+1)[1,3]))
+            self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
+            self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
+        plt.plot(*points)
+        plt.draw()
+        plt.pause(0.1)
+        if isinstance(state, np.ndarray):
+            self.R.state = cache
+        return points 

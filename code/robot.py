@@ -15,13 +15,6 @@ class Robot:
         self.n = lengths.shape[0]
         self.state = np.array(self.HOME)
         self.state_history = [self.state]
-        self.fig, self.ax = plt.subplots()
-        self.X1= -1
-        self.X2= 7
-        self.Y1= -1
-        self.Y2= 7 
-        self.ax.set_xlim((self.X1, self.X2))
-        self.ax.set_ylim((self.Y1, self.Y2))
 
     def reset(self):
         """
@@ -78,39 +71,4 @@ class Robot:
         Jo2 = [0 for _ in range(joint)]
         Jo3 = [1 for _ in range(joint)]
         return np.array([Jp1, Jp2, Jp3, Jo1, Jo2, Jo3]) 
-
-    def draw(self,state=None):
-        """
-        Draw Robot in state 'state'
-        !! Does not change the state of the robot, just draws
-        """
-
-        if isinstance(state, np.ndarray):
-            cache = self.state
-            self.state = state
-
-        points = [] 
-        # plt.figure(self.fig.number)
-        plt.cla()
-        self.ax.set_xlim((self.X1, self.X2))
-        self.ax.set_ylim((self.Y1, self.Y2))
-        plt.grid()
-        for i in range(self.n):
-            points.append((self.fk(i)[0,3], self.fk(i+1)[0,3]))
-            points.append((self.fk(i)[1,3], self.fk(i+1)[1,3]))
-            self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
-            self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
-        plt.plot(*points)
-        plt.draw()
-        plt.pause(0.1)
-        if isinstance(state, np.ndarray):
-            self.state = cache
-        return points 
-
-
-
-
-
-
-
 
