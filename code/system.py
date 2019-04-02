@@ -44,28 +44,40 @@ class PathPlanning:
 
     def logic(self,input):
         """
-        Path planning Logic <3
+        <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 
+        Task Segmentation Logic
         This is the heart of the robot
         here we decide depending on the spcecified task
         the desired joint velocities
         Simple_Open: Open loop minimum energy calculation no big deal
+        <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 
         """
 
-        # Task 1
+        # Task 1: tool position
         J1plus = np.linalg.pinv(self.R.Jacobian()) 
         T1 = J1plus[:,:2]@input
-        # Task 2
+
+        # Task 2: obstacle avoidance
+        d = np.zeros(self.R.n)
+        for i in range(1,self.R.n+1):
+            pi = self.R.fk(i)[0:2,3]
+            zi = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
+            d = d + zi
         J1 = self.R.Jacobian()
-        qr = np.array([np.pi/2]+[0]*7)  # reference state
-        H2 = 0.5 * np.eye(self.R.n)
+        #qr = np.zeros(8)  # reference state
+        H2 = 0.5 * np.eye(self.R.n)  # FIX: calibrate H2
         In = np.eye(self.R.n)
-        T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
+        #T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
+        kc = 1
+        T2 = kc * (In-J1plus@J1)@d
 
         # caluclate q dots 
-        #?FIX: zeropad input to 6 dimentions
-        out = T1 + T2 
+        # ?FIX: zeropad input to 6 dimentions
 
-        return out
+        # combine tasks
+        q_dot = T1 + T2 
+
+        return q_dot 
     
     def trajectoryPlan(self,Pa,Pb,tf):
         """
@@ -149,8 +161,8 @@ class PathPlanning:
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
         # draw obstacles
-        self.ax.add_patch(plt.Circle((self.O.bc1[0], self.O.bc1[1]), self.O.R, color='c', alpha=1, edgecolor='b'))
-        self.ax.add_patch(plt.Circle((self.O.bc2[0], self.O.bc2[1]), self.O.R, color='c', alpha=1, edgecolor='b'))
+        self.ax.add_patch(plt.Circle((self.O.bc1[0], self.O.bc1[1]), self.O.R, color='c', alpha=1))
+        self.ax.add_patch(plt.Circle((self.O.bc2[0], self.O.bc2[1]), self.O.R, color='c', alpha=1))
             
 
         plt.plot(*points)

@@ -9,13 +9,15 @@ plt.ion()
 
 HOME = [np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, 0, 0 , -np.pi/2, np.pi/2]
 R = Robot(np.ones(8),HOME)
-O = Obstacles(np.array([5,1]), 0.5, 2)
+O = Obstacles(np.array([4,1]), 0.5, 2)
 P = PathPlanning(R, O)
 P.Logic_ = 'Simple_Closed'
-
+Pa = np.array([5,1])
+Pb = np.array([6,3])
+Pc = np.array([6,-1])
 while True:
-    px , py = np.random.randint(0,6), np.random.randint(0,6)
-    print('Moving to {},{}'.format(px, py))
-    states = P.move(np.array([px,py]), 2)
- 
+    #px , py = np.random.randint(0,6), np.random.randint(0,6)
+    states = P.move(Pb, 3)
+    states = P.move(Pc, 3)
+    states = P.move(Pa, 3)
 input()
