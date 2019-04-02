@@ -54,28 +54,29 @@ class PathPlanning:
         """
 
         # Task 1: tool position
-        J1plus = np.linalg.pinv(self.R.Jacobian()) 
-        T1 = J1plus[:,:2]@input
-
+        Jac = self.R.Jacobian()[:2,:]
+        #J1plus = np.linalg.pinv(self.R.Jacobian()) 
+        J1plus = Jac.T @ np.linalg.inv(Jac @ Jac.T)
+        T1 = J1plus @ input
         # Task 2: obstacle avoidance
         d = np.zeros(self.R.n)
         for i in range(1,self.R.n+1):
             pi = self.R.fk(i)[0:2,3]
-            zi = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
-            d = d + zi
-        J1 = self.R.Jacobian()
+            zi_1 = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
+            zi_2 = (pi - self.O.bc2).T @ self.R.Jacobian(i)[:2,:]
+            d = d + zi_1 + zi_2
         #qr = np.zeros(8)  # reference state
         H2 = 0.5 * np.eye(self.R.n)  # FIX: calibrate H2
         In = np.eye(self.R.n)
         #T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
         kc = 1
-        T2 = kc * (In-J1plus@J1)@d
+        T2 = kc * (In-J1plus@Jac)@d
 
         # caluclate q dots 
         # ?FIX: zeropad input to 6 dimentions
 
         # combine tasks
-        q_dot = T1 + T2 
+        q_dot = T1  + T2 
 
         return q_dot 
     
