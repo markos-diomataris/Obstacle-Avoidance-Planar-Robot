@@ -21,7 +21,6 @@ class PathPlanning:
         self.ax.set_ylim((self.Y1, self.Y2))
         self.drawStep = 20
 
-
     def reset(self):
         """
         Reset system: reset integrator, differentiator, and Robot
@@ -41,7 +40,6 @@ class PathPlanning:
         self.integrator_ = input*self.T + self.integrator_
         return self.integrator_
 
-
     def logic(self,input):
         """
         <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 
@@ -52,25 +50,26 @@ class PathPlanning:
         Simple_Open: Open loop minimum energy calculation no big deal
         <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 
         """
+        np.set_printoptions(suppress=True)
+        np.set_printoptions(precision=3)
 
         # Task 1: tool position
         Jac = self.R.Jacobian()[:2,:]
-        #J1plus = np.linalg.pinv(self.R.Jacobian()) 
+        # J1plus = np.linalg.pinv(self.R.Jacobian()) 
         J1plus = Jac.T @ np.linalg.inv(Jac @ Jac.T)
         T1 = J1plus @ input
+
         # Task 2: obstacle avoidance
-        d = np.zeros(self.R.n)
+        grads = np.zeros((self.R.n,self.R.n)) 
         for i in range(1,self.R.n+1):
             pi = self.R.fk(i)[0:2,3]
-            zi_1 = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
-            zi_2 = (pi - self.O.bc2).T @ self.R.Jacobian(i)[:2,:]
-            d = d + zi_1 + zi_2
-        #qr = np.zeros(8)  # reference state
+            grads[:,i-1] = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
+
         H2 = 0.5 * np.eye(self.R.n)  # FIX: calibrate H2
         In = np.eye(self.R.n)
-        #T2 = (In-J1plus@J1)@H2@(qr-self.R.state)
         kc = 1
-        T2 = kc * (In-J1plus@Jac)@d
+        T2 = kc * (In-J1plus@Jac) @ grads.sum(axis=1)
+        print(grads.sum(axis=1))
 
         # caluclate q dots 
         # ?FIX: zeropad input to 6 dimentions
@@ -110,7 +109,7 @@ class PathPlanning:
         the output is applied to the Robot
         """
         
-        Pa = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool (current)
+        Pa = np.array([self.R.fk()[0,3], self.R.fk()[1,3]])  # initial position of tool (current)
         move_states = []
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
@@ -164,7 +163,6 @@ class PathPlanning:
         # draw obstacles
         self.ax.add_patch(plt.Circle((self.O.bc1[0], self.O.bc1[1]), self.O.R, color='c', alpha=1))
         self.ax.add_patch(plt.Circle((self.O.bc2[0], self.O.bc2[1]), self.O.R, color='c', alpha=1))
-            
 
         plt.plot(*points)
         plt.draw()

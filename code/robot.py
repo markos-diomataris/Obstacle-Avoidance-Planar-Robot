@@ -54,7 +54,7 @@ class Robot:
                       [0, 0, 0, 1]])
         return R
 
-    def Jacobian(self,joint=None):
+    def Jacobian(self,li=-1):
         """
         Calculate Jacobian matrix based on state
         We provide the ability to calculate Jpi by zeroing out the rest of the lengths
@@ -63,8 +63,8 @@ class Robot:
         """
         
         zeroed_lengths = np.copy(self.lengths)
-        if joint:
-            zeroed_lengths[joint:] = 0
+        if li != -1:
+            zeroed_lengths[li:] = 0
         #  Caluclate Jacobian rows
         Jp1 = [np.sum(np.multiply(-zeroed_lengths[row:], np.sin(np.cumsum(self.state)[row:]))) for row in range(self.n)]
         Jp2 = [np.sum(np.multiply(zeroed_lengths[row:], np.cos(np.cumsum(self.state)[row:]))) for row in range(self.n)]
