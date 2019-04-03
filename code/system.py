@@ -2,6 +2,8 @@ from robot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
 from pdb import set_trace
+from scipy.stats import multivariate_normal
+
 
 class PathPlanning:
 
@@ -60,22 +62,37 @@ class PathPlanning:
         T1 = J1plus @ input
 
         # Task 2: obstacle avoidance
-        grads = np.zeros((self.R.n,self.R.n)) 
+        grads1 = np.zeros((self.R.n,self.R.n)) 
+        grads2 = np.zeros((self.R.n,self.R.n)) 
+        D1 = np.zeros(self.R.n)
+        D2 = np.zeros(self.R.n)
+        rv1 = multivariate_normal(self.O.bc1, .8 * np.array([[1.5, 0],[0, 1.5]])) 
+        rv2 = multivariate_normal(self.O.bc2, .8 * np.array([[1.5, 0],[0, 1.5]])) 
+
+        scale1 = np.ones(self.R.n)
+        scale2 = np.ones(self.R.n)
         for i in range(1,self.R.n+1):
             pi = self.R.fk(i)[0:2,3]
-            grads[:,i-1] = (pi - self.O.bc1).T @ self.R.Jacobian(i)[:2,:]
+            scale1[i-1] = rv1.pdf(pi)/rv1.pdf(self.O.bc1)
+            scale2[i-1] = rv2.pdf(pi)/rv2.pdf(self.O.bc2)
+            D1[i-1] = np.linalg.norm(pi - self.O.bc1)
+            D2[i-1] = np.linalg.norm(pi - self.O.bc2)
+            Jac_li = self.R.Jacobian(i)[:2,:]
+            grad = (pi - self.O.bc1).T @ Jac_li
+            grads1[:,i-1] = grad
+            grad = (pi - self.O.bc2).T @ Jac_li
+            grads2[:,i-1] = grad
 
         H2 = 0.5 * np.eye(self.R.n)  # FIX: calibrate H2
         In = np.eye(self.R.n)
-        kc = 1
-        T2 = kc * (In-J1plus@Jac) @ grads.sum(axis=1)
-        print(grads.sum(axis=1))
+        kc = 10
+        nearrest = np.argmin(D1)
+        grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
+        T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
 
         # caluclate q dots 
-        # ?FIX: zeropad input to 6 dimentions
-
         # combine tasks
-        q_dot = T1  + T2 
+        q_dot = T1  + T2
 
         return q_dot 
     
