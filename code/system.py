@@ -66,8 +66,8 @@ class PathPlanning:
         grads2 = np.zeros((self.R.n,self.R.n)) 
         D1 = np.zeros(self.R.n)
         D2 = np.zeros(self.R.n)
-        rv1 = multivariate_normal(self.O.bc1, .8 * np.array([[1.5, 0],[0, 1.5]])) 
-        rv2 = multivariate_normal(self.O.bc2, .8 * np.array([[1.5, 0],[0, 1.5]])) 
+        rv1 = multivariate_normal(self.O.bc1, np.array([[0.5, 0],[0, 0.5]])) 
+        rv2 = multivariate_normal(self.O.bc2, np.array([[0.5, 0],[0, 0.5]])) 
 
         scale1 = np.ones(self.R.n)
         scale2 = np.ones(self.R.n)
@@ -83,12 +83,13 @@ class PathPlanning:
             grad = (pi - self.O.bc2).T @ Jac_li
             grads2[:,i-1] = grad
 
-        H2 = 0.5 * np.eye(self.R.n)  # FIX: calibrate H2
         In = np.eye(self.R.n)
-        kc = 10
-        nearrest = np.argmin(D1)
-        grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
-        T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
+        kc = 20
+        nearrest1 = np.argmin(D1)
+        nearrest2 = np.argmin(D2)
+        #grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
+        #T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
+        T2 = kc * (In-J1plus@Jac) @ ((grads1[:,nearrest1] * scale1[nearrest1]) + (grads2[:,nearrest2] * scale2[nearrest2]))
 
         # caluclate q dots 
         # combine tasks
