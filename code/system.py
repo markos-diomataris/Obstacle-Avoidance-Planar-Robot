@@ -19,7 +19,7 @@ class PathPlanning:
         self.fig, self.ax = plt.subplots()
         self.X1= -1
         self.X2= 7
-        self.Y1= -1
+        self.Y1= -4
         self.Y2= 7
         self.ax.set_xlim((self.X1, self.X2))
         self.ax.set_ylim((self.Y1, self.Y2))

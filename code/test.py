@@ -9,7 +9,7 @@ plt.ion()
 
 HOME = [np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, 0, 0 , -np.pi/2, np.pi/2]
 R = Robot(np.array([1]*8), HOME)
-O = Obstacles(np.array([3,1]), 0.9, 4)
+O = Obstacles(np.array([3,1]), 1, 4)
 P = PathPlanning(R, O)
 P.Logic_ = 'Simple_Closed'
 
