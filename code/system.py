@@ -86,12 +86,14 @@ class PathPlanning:
             grads2[:,i-1] = grad
 
         In = np.eye(self.R.n)
-        kc = 20
+        kc = 15
         nearrest1 = np.argmin(D1)
         nearrest2 = np.argmin(D2)
+        self.L.add('min_dist',np.array([D1[nearrest1]-self.O.R, D2[nearrest1]-self.O.R]))
         #grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
         #T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
         T2 = kc * (In-J1plus@Jac) @ ((grads1[:,nearrest1] * scale1[nearrest1]) + (grads2[:,nearrest2] * scale2[nearrest2]))
+        #T2 = kc * (In-J1plus@Jac) @ (grads1[:,nearrest1] + grads2[:,nearrest2])
 
         # caluclate q dots 
         # combine tasks
@@ -148,6 +150,7 @@ class PathPlanning:
                 e = xd - xe
                 # Logger
                 self.L.add('error',e)
+                self.L.add('state',self.R.state)
                 #
                 K = 2 * np.eye(e.shape[0])  # FIX: calibrate K
                 out = (K @ e) + v[:,i]
@@ -179,10 +182,15 @@ class PathPlanning:
         self.ax.set_xlim((self.X1, self.X2))
         self.ax.set_ylim((self.Y1, self.Y2))
         plt.grid()
+        fk = []
+        for i in range(self.R.n+1):
+            fk.append(self.R.fk(i))
         for i in range(self.R.n):
             # draw Robot
-            points.append((self.R.fk(i)[0,3], self.R.fk(i+1)[0,3]))
-            points.append((self.R.fk(i)[1,3], self.R.fk(i+1)[1,3]))
+            #points.append((self.R.fk(i)[0,3], self.R.fk(i+1)[0,3]))
+            points.append((fk[i][0,3], fk[i+1][0,3]))
+            #points.append((self.R.fk(i)[1,3], self.R.fk(i+1)[1,3]))
+            points.append((fk[i][1,3], fk[i+1][1,3]))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
         # draw obstacles
