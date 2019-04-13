@@ -29,5 +29,5 @@ class Logger:
 
         plt.subplot(313)
         plt.plot(self.data['min_dist'])
-        plt.title('Obstacles distance')
+        plt.title('Obstacles distance: ' + str(np.mean(self.data['min_dist'])))
         plt.grid()

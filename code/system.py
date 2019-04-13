@@ -73,26 +73,38 @@ class PathPlanning:
 
         scale1 = np.ones(self.R.n)
         scale2 = np.ones(self.R.n)
+        pi = []
         for i in range(1,self.R.n+1):
-            pi = self.R.fk(i)[0:2,3]
-            scale1[i-1] = rv1.pdf(pi)/rv1.pdf(self.O.bc(1))
-            scale2[i-1] = rv2.pdf(pi)/rv2.pdf(self.O.bc(2))
-            D1[i-1] = np.linalg.norm(pi - self.O.bc(1))
-            D2[i-1] = np.linalg.norm(pi - self.O.bc(2))
-            Jac_li = self.R.Jacobian(i)[:2,:]
-            grad = (pi - self.O.bc(1)).T @ Jac_li
-            grads1[:,i-1] = grad
-            grad = (pi - self.O.bc(2)).T @ Jac_li
-            grads2[:,i-1] = grad
+            pi.append(self.R.fk(i)[0:2,3])
+            #scale1[i-1] = rv1.pdf(pi)/rv1.pdf(self.O.bc(1))
+            #scale2[i-1] = rv2.pdf(pi)/rv2.pdf(self.O.bc(2))
+            D1[i-1] = np.linalg.norm(pi[i-1] - self.O.bc(1))
+            D2[i-1] = np.linalg.norm(pi[i-1] - self.O.bc(2))
+            #Jac_li = self.R.Jacobian(i)[:2,:]
+            #grad = (pi - self.O.bc(1)).T @ Jac_li
+            #grads1[:,i-1] = grad
+            #grad = (pi - self.O.bc(2)).T @ Jac_li
+            #grads2[:,i-1] = grad
 
         In = np.eye(self.R.n)
         kc = 15
         nearrest1 = np.argmin(D1)
         nearrest2 = np.argmin(D2)
+        #nearrest = grads1[:,nearrest1] if np.min(D1) < np.min(D2) else grads2[:,nearrest2]
+        #scale = scale1[nearrest1] if np.min(D1) < np.min(D2) else scale2[nearrest2]
         self.L.add('min_dist',np.array([D1[nearrest1]-self.O.R, D2[nearrest1]-self.O.R]))
         #grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
         #T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
-        T2 = kc * (In-J1plus@Jac) @ ((grads1[:,nearrest1] * scale1[nearrest1]) + (grads2[:,nearrest2] * scale2[nearrest2]))
+        Jac_li1 = self.R.Jacobian(nearrest1+1)[:2,:]
+        Jac_li2 = self.R.Jacobian(nearrest2+1)[:2,:]
+        grad1 = (pi[nearrest1] - self.O.bc(1)).T @ Jac_li1
+        grad2 = (pi[nearrest2] - self.O.bc(2)).T @ Jac_li2
+        sc1 = rv1.pdf(pi[nearrest1])/rv1.pdf(self.O.bc(1))
+        sc2 = rv2.pdf(pi[nearrest2])/rv2.pdf(self.O.bc(2))
+        T2 = kc * (In-J1plus@Jac) @ ((grad1 * sc1) + (grad2 * sc2))
+
+        #T2 = kc * (In-J1plus@Jac) @ ((grads1[:,nearrest1] * scale1[nearrest1]) + (grads2[:,nearrest2] * scale2[nearrest2]))
+        #T2 = kc * (In-J1plus@Jac) @ (nearrest * scale)
         #T2 = kc * (In-J1plus@Jac) @ (grads1[:,nearrest1] + grads2[:,nearrest2])
 
         # caluclate q dots 
