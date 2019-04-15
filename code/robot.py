@@ -37,7 +37,7 @@ class Robot:
                else we calculate util 'joint'
         returns: 4 x 4 numpy array
         """
-        
+
         if joint == 0:
             return np.eye(4)
         if not joint:

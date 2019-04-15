@@ -163,7 +163,7 @@ class PathPlanning:
                 # Logger
                 self.L.add('error',e)
                 self.L.add('state',self.R.state)
-                #
+
                 K = 2 * np.eye(e.shape[0])  # FIX: calibrate K
                 out = (K @ e) + v[:,i]
                 out = self.logic(out)
@@ -193,7 +193,11 @@ class PathPlanning:
         plt.cla()
         self.ax.set_xlim((self.X1, self.X2))
         self.ax.set_ylim((self.Y1, self.Y2))
-        plt.grid()
+        minor_ticksx = np.arange(self.X1, self.X2, 1)
+        minor_ticksy = np.arange(self.Y1, self.Y2, 1)
+        self.ax.set_xticks(minor_ticksx)
+        self.ax.set_yticks(minor_ticksy)
+        self.ax.grid()
         fk = []
         for i in range(self.R.n+1):
             fk.append(self.R.fk(i))
