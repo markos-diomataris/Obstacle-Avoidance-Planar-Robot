@@ -17,7 +17,7 @@ Pa = np.array([5,1])
 Pb = np.array([6,3])
 Pc = np.array([6,-1])
 
-for _ in range(100):
+for _ in range(3):
     #px , py = np.random.randint(0,6), np.random.randint(0,6)
     states = P.move(Pb, 3)
     states = P.move(Pc, 3)
