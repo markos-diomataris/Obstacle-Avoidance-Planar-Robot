@@ -4,14 +4,26 @@ from logger import Logger
 import matplotlib.pyplot as plt
 from pdb import set_trace
 from scipy.stats import multivariate_normal
+import curses
 
+
+def poll_key(win):
+    try:
+        key = win.getkey()
+        win.clear()
+        win.addstr("Detected key: " + str(key))
+        return True, str(key)
+    except Exception as e:
+        # No input
+        return False, ""
 
 class PathPlanning:
 
-    def __init__(self, R, O, T=0.01):
+    def __init__(self, R, O, win, T=0.01):
         self.R = R  # Robot
         self.O = O  # Obstacles
         self.L = Logger()
+        self.win = win
         self.integrator_ = self.R.state  # initial state of Robot
         self.differentiator_ = np.array([ self.R.fk()[0,3], self.R.fk()[1,3] ])  # initial position of tool
         self.Logic_ = 'Simple_Closed'
@@ -59,7 +71,6 @@ class PathPlanning:
 
         # Task 1: tool position
         Jac = self.R.Jacobian()[:2,:]
-        # J1plus = np.linalg.pinv(self.R.Jacobian()) 
         J1plus = Jac.T @ np.linalg.inv(Jac @ Jac.T)
         T1 = J1plus @ input
 
@@ -76,25 +87,14 @@ class PathPlanning:
         pi = []
         for i in range(1,self.R.n+1):
             pi.append(self.R.fk(i)[0:2,3])
-            #scale1[i-1] = rv1.pdf(pi)/rv1.pdf(self.O.bc(1))
-            #scale2[i-1] = rv2.pdf(pi)/rv2.pdf(self.O.bc(2))
             D1[i-1] = np.linalg.norm(pi[i-1] - self.O.bc(1))
             D2[i-1] = np.linalg.norm(pi[i-1] - self.O.bc(2))
-            #Jac_li = self.R.Jacobian(i)[:2,:]
-            #grad = (pi - self.O.bc(1)).T @ Jac_li
-            #grads1[:,i-1] = grad
-            #grad = (pi - self.O.bc(2)).T @ Jac_li
-            #grads2[:,i-1] = grad
 
         In = np.eye(self.R.n)
         kc = 15
         nearrest1 = np.argmin(D1)
         nearrest2 = np.argmin(D2)
-        #nearrest = grads1[:,nearrest1] if np.min(D1) < np.min(D2) else grads2[:,nearrest2]
-        #scale = scale1[nearrest1] if np.min(D1) < np.min(D2) else scale2[nearrest2]
         self.L.add('min_dist',np.array([D1[nearrest1]-self.O.R, D2[nearrest1]-self.O.R]))
-        #grads1_norm = grads1/np.linalg.norm(grads1, ord=2, axis=1, keepdims=True)
-        #T2 = kc * (In-J1plus@Jac) @ ((grads1 @ scale1) + (grads2 @ scale2))
         Jac_li1 = self.R.Jacobian(nearrest1+1)[:2,:]
         Jac_li2 = self.R.Jacobian(nearrest2+1)[:2,:]
         grad1 = (pi[nearrest1] - self.O.bc(1)).T @ Jac_li1
@@ -103,12 +103,8 @@ class PathPlanning:
         sc2 = rv2.pdf(pi[nearrest2])/rv2.pdf(self.O.bc(2))
         T2 = kc * (In-J1plus@Jac) @ ((grad1 * sc1) + (grad2 * sc2))
 
-        #T2 = kc * (In-J1plus@Jac) @ ((grads1[:,nearrest1] * scale1[nearrest1]) + (grads2[:,nearrest2] * scale2[nearrest2]))
-        #T2 = kc * (In-J1plus@Jac) @ (nearrest * scale)
-        #T2 = kc * (In-J1plus@Jac) @ (grads1[:,nearrest1] + grads2[:,nearrest2])
 
-        # caluclate q dots 
-        # combine tasks
+        # caluclate q dots by combining tasks
         q_dot = T1  + T2
 
         return q_dot
@@ -169,7 +165,13 @@ class PathPlanning:
                 out = self.logic(out)
                 q = self.integrator(out)
                 self.R.move(q)
-                self.O.move()
+                #get input and move Obstacles
+                available_input, inp = poll_key(self.win)
+                if available_input:
+                    self.O.move(inp)
+                else:
+                    self.O.move("")
+
                 move_states.append(q)
 
             if i % self.drawStep == 0:

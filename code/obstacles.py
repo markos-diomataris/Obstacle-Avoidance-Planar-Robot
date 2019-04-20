@@ -18,12 +18,12 @@ class Obstacles:
         self.R = R
         self.D = D
         # Ball centers
-        self.phase = 0
         self.speed = speed
+        self.direction = np.array([.0,.0])
 
     def bc(self,b):
         y = 1 if b == 1 else -1
-        return self.HOME + np.sin(self.phase) * np.array([0,1])+ self.D/2 * np.array([0,y]) + np.cos(self.phase) * np.array([1,0])
+        return self.HOME + self.D/2 * np.array([0,y])
 
     def minDistance(self,p):
         """
@@ -33,6 +33,16 @@ class Obstacles:
         d2 = np.linalg.norm(self.bc2 - p)
         return np.min(d1, d2)
 
-    def move(self):
-      self.phase += self.speed
+    def move(self, inp):
+        if inp == "KEY_UP":
+            self.direction = np.array([0,1])
+        if inp == "KEY_DOWN":
+            self.direction = np.array([0,-1])
+        if inp == "KEY_RIGHT":
+            self.direction = np.array([1,0])
+        if inp == "KEY_LEFT":
+            self.direction = np.array([-1,0])
+        if inp == "s":
+            self.direction = np.zeros(2)
+        self.HOME = self.HOME + self.speed * self.direction
 
