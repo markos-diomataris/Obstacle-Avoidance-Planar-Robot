@@ -3,8 +3,7 @@ Implemntation of Obstacle class
 """
 
 import numpy as np
-from pdb import set_trace
-
+import sys
 
 class Obstacles:
 
@@ -44,5 +43,7 @@ class Obstacles:
             self.direction = np.array([-1,0])
         if inp == "s":
             self.direction = np.zeros(2)
+        if inp == "q":
+            sys.exit(0)
         self.HOME = self.HOME + self.speed * self.direction
 
