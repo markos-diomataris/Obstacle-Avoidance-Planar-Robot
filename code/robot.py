@@ -10,12 +10,14 @@ class Robot:
         """
         l: list of connector lengths
         """
-        
+
         self.HOME = HOME
         self.lengths = lengths
         self.n = lengths.shape[0]
         self.state = np.array(self.HOME)
         self.state_history = [self.state]
+        self.fk_cache = dict()
+        self.J_cache = dict()
 
     def reset(self):
         """
@@ -25,10 +27,13 @@ class Robot:
 
         self.state = np.array(self.HOME)
         self.state_history = [self.state]
+        self.fk_cache = dict()
 
     def move(self,state):
         self.state_history.append(state)
         self.state = state
+        self.fk_cache = dict()
+        self.J_cache = dict()
 
     def fk(self,joint=None):
         """
@@ -37,6 +42,11 @@ class Robot:
                else we calculate util 'joint'
         returns: 4 x 4 numpy array
         """
+        #try to find already calculated Forward Kinematics
+        try:
+            return self.fk_cache[join]
+        except Exception as e:
+            pass
 
         if joint == 0:
             return np.eye(4)
@@ -52,6 +62,7 @@ class Robot:
                       [s, c, 0, dy],
                       [0, 0, 1, 0],
                       [0, 0, 0, 1]])
+        self.fk_cache[joint] = R
         return R
 
     def Jacobian(self,li=-1):
@@ -61,7 +72,12 @@ class Robot:
         Jpi = rate of change of Oi coordinate frame with respect to q
         returns: 6 x n numpy array
         """
-        
+        #try to find already calculated Jacobian 
+        try:
+            return self.J_cache[join]
+        except Exception as e:
+            pass
+
         zeroed_lengths = np.copy(self.lengths)
         if li != -1:
             zeroed_lengths[li:] = 0
@@ -73,5 +89,6 @@ class Robot:
         Jo2 = [0 for _ in range(self.n)]
         Jo3 = [1 for _ in range(self.n)]
 
-        return np.array([Jp1, Jp2, Jp3, Jo1, Jo2, Jo3]) 
-
+        ret = np.array([Jp1, Jp2, Jp3, Jo1, Jo2, Jo3])
+        self.J_cache[li] = ret
+        return ret

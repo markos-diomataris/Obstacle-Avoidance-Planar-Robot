@@ -7,10 +7,17 @@ from scipy.stats import multivariate_normal
 import curses
 
 
+prompt = "Simulation began, please don't crash the robot\n \
+        Controls:\n \
+        q: Quit\n \
+        arrow keys: move Obstacles\n \
+        s: stop Obstacles\n"
+
 def poll_key(win):
     try:
         key = win.getkey()
         win.clear()
+        win.addstr(prompt)
         win.addstr("Detected key: " + str(key))
         return True, str(key)
     except Exception as e:
@@ -144,15 +151,7 @@ class PathPlanning:
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
 
-            if self.Logic_ == 'Simple_Open':
-                out = self.differentiator(p[:,i])
-                out = self.logic(out)
-                q = self.integrator(out)
-                self.R.move(q)
-                self.O.move()
-                move_states.append(q)
-
-            elif self.Logic_ == 'Simple_Closed':
+            if self.Logic_ == 'Simple_Closed':
                 xd = p[:,i]
                 xe = self.R.fk()[:2,3]
                 e = xd - xe
@@ -175,11 +174,11 @@ class PathPlanning:
                 move_states.append(q)
 
             if i % self.drawStep == 0:
-                self.draw()
+                self.draw(Pa,Pb)
 
         return move_states
 
-    def draw(self,state=None):
+    def draw(self, Pa, Pb, state=None):
         """
         Draw Robot  and obstacles in state 'state'
         !! Does not change the state of the robot or position of obstacles,
@@ -205,16 +204,18 @@ class PathPlanning:
             fk.append(self.R.fk(i))
         for i in range(self.R.n):
             # draw Robot
-            #points.append((self.R.fk(i)[0,3], self.R.fk(i+1)[0,3]))
             points.append((fk[i][0,3], fk[i+1][0,3]))
-            #points.append((self.R.fk(i)[1,3], self.R.fk(i+1)[1,3]))
             points.append((fk[i][1,3], fk[i+1][1,3]))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.06, color='g', alpha=1))
             self.ax.add_patch(plt.Circle((points[-2][0],points[-1][0]), 0.04, color='r', alpha=1))
         # draw obstacles
         self.ax.add_patch(plt.Circle((self.O.bc(1)[0], self.O.bc(1)[1]), self.O.R, color='c', alpha=1))
         self.ax.add_patch(plt.Circle((self.O.bc(2)[0], self.O.bc(2)[1]), self.O.R, color='c', alpha=1))
-
+        #draw path
+        points.append((Pa[0], Pb[0]))
+        points.append((Pa[1], Pb[1]))
+        self.ax.add_patch(plt.Circle((Pa[0],Pa[1]), 0.08, color='b', alpha=1))
+        self.ax.add_patch(plt.Circle((Pb[0],Pb[1]), 0.08, color='b', alpha=1))
         plt.plot(*points)
         plt.draw()
         plt.pause(0.1)

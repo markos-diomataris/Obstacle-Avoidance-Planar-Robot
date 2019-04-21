@@ -5,10 +5,12 @@ import curses
 import os, sys
 from robot import Robot
 from obstacles import Obstacles
-from system import PathPlanning
+from system import PathPlanning, prompt
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+
+
 
 def poll_key(win):
     try:
@@ -25,7 +27,7 @@ def main(win):
     win.nodelay(True)
     key=""
     win.clear()
-
+    win.addstr(prompt)
     HOME = [np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, 0, 0 , -np.pi/2, np.pi/2]
     R = Robot(np.array([1]*8), HOME)
     O = Obstacles(np.array([3,1]), 1, 4, speed=np.pi/200)
