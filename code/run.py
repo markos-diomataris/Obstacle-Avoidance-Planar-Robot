@@ -39,11 +39,16 @@ def main(win):
     Pa = np.array([5,1])
     Pb = np.array([6,3])
     Pc = np.array([6,-1])
-
-    for _ in range(3):
-        P.move(Pb, 3)
-        P.move(Pc, 3)
-        P.move(Pa, 3)
+    if not manual:
+        for _ in range(3):
+            P.move(Pb, 3)
+            P.move(Pc, 3)
+            P.move(Pa, 3)
+    else:
+        while True:
+            P.move(Pb, 3)
+            P.move(Pc, 3)
+            P.move(Pa, 3)
 
     P.L.plot_results()
     input()
