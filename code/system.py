@@ -150,6 +150,18 @@ class PathPlanning:
         move_states = []
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
+            if self.Logic_ == 'Simple_Open':
+                out = self.differentiator(p[:,i])
+                out = self.logic(out)
+                q = self.integrator(out)
+                self.R.move(q)
+                #get input and move Obstacles
+                available_input, inp = poll_key(self.win)
+                if available_input:
+                    self.O.move(input=inp)
+                else:
+                    self.O.move(input="")
+                move_states.append(q)
 
             if self.Logic_ == 'Simple_Closed':
                 xd = p[:,i]

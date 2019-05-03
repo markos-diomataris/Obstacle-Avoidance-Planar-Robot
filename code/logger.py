@@ -17,17 +17,20 @@ class Logger:
     def plot_results(self):
         plt.figure()
 
-        plt.subplot(311)
+        plt.subplot(211)
         plt.plot(self.data['error'])
         plt.title('error')
         plt.grid()
 
-        plt.subplot(312)
-        plt.plot(self.data['state'])
-        plt.title('state')
-        plt.grid()
-
-        plt.subplot(313)
+        plt.subplot(212)
         plt.plot(self.data['min_dist'])
         plt.title('Obstacles distance: ' + str(np.mean(self.data['min_dist'])))
         plt.grid()
+
+#        plt.subplot(312)
+#        plt.plot(self.data['state'])
+#        plt.title('state')
+#        plt.grid()
+
+
+        plt.show()
