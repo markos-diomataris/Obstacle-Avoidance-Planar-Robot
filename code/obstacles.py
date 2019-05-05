@@ -38,10 +38,11 @@ class Obstacles:
         return np.min(d1, d2)
 
     def move(self, input=""):
+        if input == "q":
+            raise ValueError('User exited')
         if not self.manual:
             self.phase = self.phase + self.speed
             return
-
         if input == "KEY_UP":
             self.direction = np.array([0,1])
         if input == "KEY_DOWN":
@@ -52,7 +53,6 @@ class Obstacles:
             self.direction = np.array([-1,0])
         if input == "s":
             self.direction = np.zeros(2)
-        if input == "q":
-            sys.exit(0)
+
         self.HOME = self.HOME + self.speed * self.direction
 

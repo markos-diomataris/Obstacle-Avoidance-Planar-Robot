@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from pdb import set_trace
 from scipy.stats import multivariate_normal
 import curses
+import sys
 
 
 prompt = "Simulation began, please don't crash the robot\n \
@@ -98,14 +99,16 @@ class PathPlanning:
             D2[i-1] = np.linalg.norm(pi[i-1] - self.O.bc(2))
 
         In = np.eye(self.R.n)
-        kc = 15
+        kc = 95
         nearrest1 = np.argmin(D1)
         nearrest2 = np.argmin(D2)
-        self.L.add('min_dist',np.array([D1[nearrest1]-self.O.R, D2[nearrest1]-self.O.R]))
+        self.L.add('min_dist',np.array([D1[nearrest1]-self.O.R, D2[nearrest2]-self.O.R]))
         Jac_li1 = self.R.Jacobian(nearrest1+1)[:2,:]
         Jac_li2 = self.R.Jacobian(nearrest2+1)[:2,:]
         grad1 = (pi[nearrest1] - self.O.bc(1)).T @ Jac_li1
+        grad1 = grad1/np.sqrt(np.sum(grad1**2))
         grad2 = (pi[nearrest2] - self.O.bc(2)).T @ Jac_li2
+        grad2 = grad2/np.sqrt(np.sum(grad2**2))
         sc1 = rv1.pdf(pi[nearrest1])/rv1.pdf(self.O.bc(1))
         sc2 = rv2.pdf(pi[nearrest2])/rv2.pdf(self.O.bc(2))
         T2 = kc * (In-J1plus@Jac) @ ((grad1 * sc1) + (grad2 * sc2))
@@ -151,6 +154,13 @@ class PathPlanning:
         v, p, time = self.trajectoryPlan(Pa,Pb,tf)
         for i in range(time.shape[0]):
             if self.Logic_ == 'Simple_Open':
+                xd = p[:,i]
+                xe = self.R.fk()[:2,3]
+                e = xd - xe
+                # Logger
+                self.L.add('error',e)
+                self.L.add('state',self.R.state)
+
                 out = self.differentiator(p[:,i])
                 out = self.logic(out)
                 q = self.integrator(out)
@@ -158,9 +168,15 @@ class PathPlanning:
                 #get input and move Obstacles
                 available_input, inp = poll_key(self.win)
                 if available_input:
-                    self.O.move(input=inp)
+                    try:
+                        self.O.move(inp)
+                    except ValueError:
+                        raise
                 else:
-                    self.O.move(input="")
+                    try:
+                        self.O.move("")
+                    except ValueError:
+                        raise
                 move_states.append(q)
 
             if self.Logic_ == 'Simple_Closed':
@@ -179,10 +195,15 @@ class PathPlanning:
                 #get input and move Obstacles
                 available_input, inp = poll_key(self.win)
                 if available_input:
-                    self.O.move(inp)
+                    try:
+                        self.O.move(inp)
+                    except ValueError:
+                        raise
                 else:
-                    self.O.move("")
-
+                    try:
+                        self.O.move("")
+                    except ValueError:
+                        raise
                 move_states.append(q)
 
             if i % self.drawStep == 0:
@@ -223,6 +244,15 @@ class PathPlanning:
         # draw obstacles
         self.ax.add_patch(plt.Circle((self.O.bc(1)[0], self.O.bc(1)[1]), self.O.R, color='c', alpha=1))
         self.ax.add_patch(plt.Circle((self.O.bc(2)[0], self.O.bc(2)[1]), self.O.R, color='c', alpha=1))
+        #draw contours
+        delta = 0.025
+        x = np.arange(self.X1,self.X2, delta)
+        y = np.arange(self.Y1,self.Y2, delta)
+        X, Y = np.meshgrid(x, y)
+        Z1 = np.exp(-(X-self.O.bc(1)[0])**2/(2*self.O.R) - (Y-self.O.bc(1)[1])**2/(2*self.O.R))
+        Z2 = np.exp(-(X-self.O.bc(2)[0])**2/(2*self.O.R) - (Y-self.O.bc(2)[1])**2/(2*self.O.R))
+        Z = (Z1 - Z2) * 2
+        self.ax.contour(X,Y,Z)
         #draw path
         points.append((Pa[0], Pb[0]))
         points.append((Pa[1], Pb[1]))

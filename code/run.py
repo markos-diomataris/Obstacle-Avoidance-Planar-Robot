@@ -35,20 +35,27 @@ def main(win):
     O = Obstacles(np.array([3,1]), 1, 4, speed=np.pi/200, manual=manual)
     P = PathPlanning(R, O, win)
     P.Logic_ = 'Simple_Closed'
+#    P.Logic_ = 'Simple_Open'
     #setup path triangle points
     Pa = np.array([5,1])
     Pb = np.array([6,3])
     Pc = np.array([6,-1])
     if not manual:
         for _ in range(3):
-            P.move(Pb, 3)
-            P.move(Pc, 3)
-            P.move(Pa, 3)
+            try:
+                P.move(Pb, 3)
+                P.move(Pc, 3)
+                P.move(Pa, 3)
+            except:
+                break
     else:
         while True:
-            P.move(Pb, 3)
-            P.move(Pc, 3)
-            P.move(Pa, 3)
+            try:
+                P.move(Pb, 3)
+                P.move(Pc, 3)
+                P.move(Pa, 3)
+            except:
+                break
 
     P.L.plot_results()
     input()
